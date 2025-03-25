@@ -5,12 +5,12 @@ const cheerio = require('cheerio');
 const { chromium } = require('playwright');
 
 const catalogIds = [
-  2050, // Men Clothing
-  1231, // Men Shoes
-  82, // Men Accessories
-  139, // Men Grooming
-  4, // Women Clothing
-  16, // Women Shoes
+  // 2050, // Men Clothing
+  // 1231, // Men Shoes
+  // 82, // Men Accessories
+  // 139, // Men Grooming
+  // 4, // Women Clothing
+  // 16, // Women Shoes
   19, // Women Bags
   1187, // Women Accessories
   146, // Women Beauty;
@@ -445,7 +445,7 @@ async function processRawCatalogData(catalogId) {
 // Main execution function
 async function main() {
   const searchParams = process.argv[2] ? JSON.parse(process.argv[2]) : {};
-
+  let failedToFetch = [];
   // Phase 1: Fetch all catalog data
   console.log('Phase 1: Fetching catalog data...');
   for (const catalogId of catalogIds) {
@@ -454,7 +454,25 @@ async function main() {
     if (!success) {
       console.error(`Failed to fetch catalog ${catalogId}, moving to next...`);
     }
+    failedToFetch.push(catalogId)
     // Add delay between catalogs
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+
+  while (failedToFetch.length > 0) {
+    console.log(`\nRetrying failed catalogs: ${failedToFetch.join(', ')}`);
+    for (const catalogId of failedToFetch) {
+      console.log(`\nFetching catalog ID: ${catalogId}`);
+      const success = await fetchCatalogData(catalogId, searchParams);
+      if (success) {
+        console.log(`✓ Successfully fetched catalog ${catalogId}`);
+        failedToFetch = failedToFetch.filter((id) => id !== catalogId);
+      } else {
+        console.error(
+          `Failed to fetch catalog ${catalogId}, moving to next...`
+        );
+      }
+    }
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 
