@@ -57,10 +57,7 @@ const convertToCSV = (items) => {
   return [header, ...rows].join('\n');
 };
 
-const main = async () => {
-  const dataDir = path.join(__dirname, '..', 'data');
-  const processedCatalogsDir = path.join(dataDir, 'processed_catalogs');
-
+const processCatalogFiles = async (processedCatalogsDir, outputDir) => {
   // Get all processed catalog files
   const catalogFiles = fs
     .readdirSync(processedCatalogsDir)
@@ -81,7 +78,7 @@ const main = async () => {
 
       // Write catalog-specific CSV file
       const outputPath = path.join(
-        dataDir,
+        outputDir,
         `vinted_items_catalog_${catalogId}.csv`
       );
       fs.writeFileSync(outputPath, csv, 'utf8');
@@ -91,8 +88,44 @@ const main = async () => {
       console.log(`No items found in catalog ${catalogId}`);
     }
   }
+};
 
-  console.log('All catalogs processed!');
+const main = async () => {
+  const dataDir = path.join(__dirname, '..', 'data');
+  
+  // Get all date folders (e.g., 28-02, 04-03)
+  const dateFolders = fs.readdirSync(dataDir)
+    .filter(folder => {
+      const folderPath = path.join(dataDir, folder);
+      return fs.statSync(folderPath).isDirectory() && 
+             /^\d{2}-\d{2}$/.test(folder); // Match date format like "28-02"
+    });
+  
+  if (dateFolders.length === 0) {
+    console.log('No date folders found. Processing root data directory...');
+    const processedCatalogsDir = path.join(dataDir, 'processed_catalogs');
+    if (fs.existsSync(processedCatalogsDir)) {
+      await processCatalogFiles(processedCatalogsDir, dataDir);
+    } else {
+      console.log('No processed_catalogs directory found.');
+    }
+    return;
+  }
+  
+  // Process each date folder
+  for (const dateFolder of dateFolders) {
+    console.log(`\nProcessing data for date: ${dateFolder}`);
+    const dateFolderPath = path.join(dataDir, dateFolder);
+    const processedCatalogsDir = path.join(dateFolderPath, 'processed_catalogs');
+    
+    if (fs.existsSync(processedCatalogsDir)) {
+      await processCatalogFiles(processedCatalogsDir, dateFolderPath);
+    } else {
+      console.log(`No processed_catalogs directory found in ${dateFolder}.`);
+    }
+  }
+
+  console.log('\nAll date folders processed!');
 };
 
 main().catch(console.error);

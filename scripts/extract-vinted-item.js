@@ -223,7 +223,7 @@ async function processItems() {
 
         // Add delay between requests to avoid rate limiting
         await new Promise((resolve) =>
-          setTimeout(resolve, Math.random() * 2000 + 1000)
+          setTimeout(resolve, Math.random() * 200 + 100)
         );
       }
     }

@@ -55,5 +55,5 @@ test-results/
 playwright/.cache/
 
 # Project specific
-data/*
+
 !data/.gitkeep
